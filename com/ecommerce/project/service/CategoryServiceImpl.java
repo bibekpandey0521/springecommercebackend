@@ -3,7 +3,9 @@ package com.ecommerce.project.service;
 //import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.ecommerce.project.exceptions.APIException;
 import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Category;
+import com.ecommerce.project.payload.CategoryDTO;
+import com.ecommerce.project.payload.CategoryResponse;
 import com.ecommerce.project.repositories.CategoryRepository;
 
 @Service
@@ -22,27 +26,47 @@ public class CategoryServiceImpl implements CategoryService {
 
 	@Autowired
 	private CategoryRepository categoryRepository;
-
+	
+	
+	@Autowired
+	private ModelMapper modelMapper;
+	
+	
 	@Override
-	public List<Category> getAllCategories() {
+//	public List<Category> getAllCategories() 
+	
+	public CategoryResponse getAllCategories() {
 		List<Category> categories = categoryRepository.findAll();
 		if(categories.isEmpty())
 			throw new APIException("No Category created till now");
-		return categoryRepository.findAll();
+//		return categoryRepository.findAll();
+		
+		List<CategoryDTO> categoryDTOS = categories.stream()
+				.map(category -> modelMapper.map(category,CategoryDTO.class))
+				.toList();
+		CategoryResponse categoryResponse = new CategoryResponse();
+		categoryResponse.setContent(categoryDTOS);
+		return categoryResponse;
 	}
 
 	@Override
-	public void createCategory(Category category) {
+	public CategoryDTO createCategory(CategoryDTO categoryDTO) {
+		
 //		category.setCategoryId(nextId++);
 //		categories.add(category);
-		Category savedCategory = categoryRepository.findByCategoryName(category.getCategoryName());
-		if(savedCategory!=null)
+		
+		Category category = modelMapper.map(categoryDTO, Category.class);
+		Category categoryFromDb = categoryRepository.findByCategoryName(category.getCategoryName());
+		if(categoryFromDb!=null)
 			throw new APIException("Category with the name" +category.getCategoryName()+" already exists!!!!");
-		categoryRepository.save(category);
+//		categoryRepository.save(category);
+		Category savedCategory = categoryRepository.save(category);
+//		CategoryDTO savedCategoryDTO = modelMapper.map(savedCategory, CategoryDTO.class);
+		return modelMapper.map(savedCategory, CategoryDTO.class);
 	}
 
 	@Override
-	public String deleteCategory(Long categoryId) {
+	public CategoryDTO deleteCategory(Long categoryId) {
 
 		Category category = categoryRepository.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category","categoryId",categoryId));
@@ -57,11 +81,12 @@ public class CategoryServiceImpl implements CategoryService {
 
 //		categories.remove(category);
 		categoryRepository.delete(category);
-		return "Category with CategoryId: " + categoryId + " deleted Successfully";
+//		return "Category with CategoryId: " + categoryId + " deleted Successfully";
+		return modelMapper.map(category, CategoryDTO.class);
 	}
 
 	@Override
-	public Category updateCategory(Category category, Long categoryId) {
+	public CategoryDTO updateCategory(CategoryDTO categoryDTO, Long categoryId) {
 
 //		List<Category> categories = categoryRepository.findAll();
 		Optional<Category> savedCategoryOptional = categoryRepository.findById(categoryId);
@@ -72,9 +97,10 @@ public class CategoryServiceImpl implements CategoryService {
 		Category savedCategory = savedCategoryOptional
 				.orElseThrow(() -> new ResourceNotFoundException("Category","categoryId",categoryId));
 
+		Category category = modelMapper.map(categoryDTO,Category.class);
 		category.setCategoryId(categoryId);
 		savedCategory = categoryRepository.save(category);
-		return savedCategory;
+		return modelMapper.map(savedCategory,CategoryDTO.class);
 //		Optional<Category> optionalCategory = categories.stream()
 //				.filter(c->c.getCategoryId().equals(categoryId))
 //				.findFirst();
