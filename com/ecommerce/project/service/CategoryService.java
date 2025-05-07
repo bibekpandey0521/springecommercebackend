@@ -10,7 +10,8 @@ public interface CategoryService {
 
 //	List<Category> getAllCategories();
 	
-	CategoryResponse getAllCategories();
+//	CategoryResponse getAllCategories();
+	CategoryResponse getAllCategories(Integer pageNumber, Integer pageSize,String sortBy,String sortOrder);
 	
 	CategoryDTO createCategory(CategoryDTO categoryDTO);
 	
