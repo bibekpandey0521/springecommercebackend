@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,13 @@ public class ProductServiceImpl implements ProductService {
 
 	@Autowired
 	private ModelMapper modelMapper;
-
+	
+	@Autowired
+	private FileService fileService;
+	
+	@Value("${project.image}")
+	private String path;
+	
 	@Override
 	public ProductDTO addProduct(Long categoryId, ProductDTO productDTO) {
 		Category category = categoryRepository.findById(categoryId)
@@ -129,8 +136,9 @@ public class ProductServiceImpl implements ProductService {
 		//Upload image to server
 		//Get the file name of uploaded image
 //		String path = "/images";
-		String path = "images/";
-		String fileName = uploadImage(path,image);
+//		String path = "images/";
+		
+		String fileName = fileService.uploadImage(path,image);
 		
 		//Updating the new file name to product
 		productFromDb.setImage(fileName);
@@ -141,29 +149,29 @@ public class ProductServiceImpl implements ProductService {
 		return modelMapper.map(updatedProduct, ProductDTO.class);
 	}
 
-	private String uploadImage(String path, MultipartFile file) throws IOException {
-		//File names of current/original file
-		String originalFileName = file.getOriginalFilename();
-		
-		//Generate a unique file name
-		String randomId = UUID.randomUUID().toString();
-		//mat.jpg ---> 1234 --> 1234.jpg
-		String fileName = randomId.concat(originalFileName.substring(originalFileName.lastIndexOf('.')));
-		String filePath = path + File.separator + fileName;
-		// path + "/" + filePath
-		
-		// Check if path exist and create
-		File folder = new File(path);
-		if(!folder.exists()) {
-			folder.mkdir();
-		}
-		
-		
-		//upload to server
-		Files.copy(file.getInputStream(), Paths.get(filePath));
-		//returning file name
-		return fileName;
-	}
+//	private String uploadImage(String path, MultipartFile file) throws IOException {
+//		//File names of current/original file
+//		String originalFileName = file.getOriginalFilename();
+//		
+//		//Generate a unique file name
+//		String randomId = UUID.randomUUID().toString();
+//		//mat.jpg ---> 1234 --> 1234.jpg
+//		String fileName = randomId.concat(originalFileName.substring(originalFileName.lastIndexOf('.')));
+//		String filePath = path + File.separator + fileName;
+//		// path + "/" + filePath
+//		
+//		// Check if path exist and create
+//		File folder = new File(path);
+//		if(!folder.exists()) {
+//			folder.mkdir();
+//		}
+//		
+//		
+//		//upload to server
+//		Files.copy(file.getInputStream(), Paths.get(filePath));
+//		//returning file name
+//		return fileName;
+//	}
 
 //	public ResponseEntity<ProductResponse> getProductsByCategory(@PathVariable Long categoryId) {
 //		ProductResponse productResponse = productService.searchByCategory(categoryId);
